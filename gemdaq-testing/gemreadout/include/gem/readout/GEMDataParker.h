@@ -1,6 +1,9 @@
 #ifndef gem_readout_GEMDataParker_h
 #define gem_readout_GEMDataParker_h
 
+#include "gem/readout/GEMDataAMCformat.h"
+#include "gem/readout/GEMslotContents.h"
+
 #include "xdata/String.h"
 #include <string>
 
@@ -12,11 +15,11 @@ namespace gem {
       class HwGLIB;
     }   
   }
-  namespace readout {
-    struct VFATData;
-    struct GEBData;
-    struct GEMData;
-  }
+  //namespace readout {
+  //  struct VFATData;
+  //  struct GEBData;
+  //  struct GEMData;
+  //}
   namespace readout {
     class GEMDataParker
     {

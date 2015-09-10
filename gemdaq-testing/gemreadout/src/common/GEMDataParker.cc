@@ -1,5 +1,4 @@
 #include "gem/readout/GEMDataParker.h"
-#include "gem/readout/GEMDataAMCformat.h"
 #include "gem/hw/glib/HwGLIB.h"
 
 #include <boost/utility/binary.hpp>
