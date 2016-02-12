@@ -20,13 +20,13 @@ namespace gem {
       {
       public:
         //methods copied from tcds soap helper
-        static xoap::MessageReference makeSoapReply(std::string const& command,
+        static xoap::MessageReference makeSOAPReply(std::string const& command,
                                                     std::string const& response);
-        static xoap::MessageReference makeSoapFaultReply(std::string const& faultString,
+        static xoap::MessageReference makeSOAPFaultReply(std::string const& faultString,
                                                          std::string const& faultCode="Server",
                                                          std::string const& faultActor="",
                                                          std::string const& detail="");
-        static xoap::MessageReference makeFSMSoapReply(std::string const& event,
+        static xoap::MessageReference makeFSMSOAPReply(std::string const& event,
                                                        std::string const& state);
 	
         static std::string extractFSMCommandName(xoap::MessageReference const& msg);
@@ -47,6 +47,23 @@ namespace gem {
                                 //log4cplus::Logger* logger,
                                 //std::string const& param
                                 )
+          throw (gem::utils::exception::Exception);
+	
+        static std::pair<std::string,std::string> extractCommandWithParameter(xoap::MessageReference const& msg);
+	
+        /**
+         * @param cmd command to send to the application
+         * @param parameter parameter to send to the application
+         * @param appCxt context in which the source/receiver applications are running
+         * @param srcDsc source application descriptor
+         * @param destDsc destination application descriptor
+         * returns true if successful/completed
+         */
+        static bool sendCommandWithParameter(std::string const& cmd, int const& parameter,
+                                             xdaq::ApplicationContext* appCxt,
+                                             xdaq::ApplicationDescriptor* srcDsc,
+                                             xdaq::ApplicationDescriptor* destDsc
+                                             )
           throw (gem::utils::exception::Exception);
 	
         //methods copied from emu/soap/toolbox
