@@ -37,29 +37,63 @@ namespace gem {
          * @param srcDsc source application descriptor
          * @param destDsc destination application descriptor
          * @param logger logger object
-         * @param param parameters to append to the SOAP message
-         * returns true if successful/completed
+         * @returns true if successful/completed
          */
         static bool sendCommand(std::string const& cmd,
                                 xdaq::ApplicationContext* appCxt,
                                 xdaq::ApplicationDescriptor* srcDsc,
                                 xdaq::ApplicationDescriptor* destDsc
-                                //log4cplus::Logger* logger,
-                                //std::string const& param
+                                //log4cplus::Logger* logger
                                 )
+          throw (gem::utils::exception::Exception);
+	
+        /**
+         * @param parameter is a vector of strings, contaning the parameter name, value, and the xsd type for the SOAP transaction
+         * @param appCxt context in which the source/receiver applications are running
+         * @param srcDsc source application descriptor
+         * @param destDsc destination application descriptor
+         * @param logger logger object
+         * @param param parameters to append to the SOAP message
+         * @returns true if successful/completed
+         */
+        static bool sendParameter(std::vector<std::string> const& parameter,
+                                  xdaq::ApplicationContext* appCxt,
+                                  xdaq::ApplicationDescriptor* srcDsc,
+                                  xdaq::ApplicationDescriptor* destDsc
+                                  //log4cplus::Logger* logger,
+                                  //std::string const& param
+                                  )
           throw (gem::utils::exception::Exception);
 	
         static std::pair<std::string,std::string> extractCommandWithParameter(xoap::MessageReference const& msg);
 	
-        /**
+         /**
          * @param cmd command to send to the application
          * @param parameter parameter to send to the application
          * @param appCxt context in which the source/receiver applications are running
          * @param srcDsc source application descriptor
          * @param destDsc destination application descriptor
-         * returns true if successful/completed
+         * @returns true if successful/completed
          */
         static bool sendCommandWithParameter(std::string const& cmd, int const& parameter,
+                                             xdaq::ApplicationContext* appCxt,
+                                             xdaq::ApplicationDescriptor* srcDsc,
+                                             xdaq::ApplicationDescriptor* destDsc
+                                             )
+          throw (gem::utils::exception::Exception);
+	
+         /**
+         * @param parName Name of the parameter in the destination application info space
+         * @param parType xsd type of the specified parameter
+         * @param parValue parameter value (as string) to send in SOAP message
+         * @param appCxt context in which the source/receiver applications are running
+         * @param srcDsc source application descriptor
+         * @param destDsc destination application descriptor
+         * returns true if successful/completed
+         */
+        static bool sendApplicationParameter(std::string const& parName,
+                                             std::string const& parType,
+                                             std::string const& parValue,
                                              xdaq::ApplicationContext* appCxt,
                                              xdaq::ApplicationDescriptor* srcDsc,
                                              xdaq::ApplicationDescriptor* destDsc
@@ -98,9 +132,7 @@ namespace gem {
       };
       
     }//end namespace gem::utils::soap
-
   }//end namespace gem::base
-
 }//end namespace gem
 
 #endif 

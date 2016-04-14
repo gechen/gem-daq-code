@@ -325,13 +325,13 @@ xoap::MessageReference gem::base::GEMFSM::changeState(xoap::MessageReference msg
 
 std::string gem::base::GEMFSM::getCurrentState() const
 {
-  INFO("GEMFSM::getCurrentState()");
+  DEBUG("GEMFSM::getCurrentState()");
   return p_gemfsm->getStateName(p_gemfsm->getCurrentState());
 }
 
 std::string gem::base::GEMFSM::getStateName(toolbox::fsm::State const& state) const
 {
-  INFO("GEMFSM::getStateName()");
+  DEBUG("GEMFSM::getStateName()");
   return p_gemfsm->getStateName(state);
 }
 
@@ -365,6 +365,7 @@ void gem::base::GEMFSM::stateChanged(toolbox::fsm::FiniteStateMachine &fsm)
   m_gemFSMState = fsm.getStateName(fsm.getCurrentState());
   //p_appStateInfoSpaceHandler->setFSMState(state_);
   p_gemApp->getAppISToolBox()->setString("FSMState",m_gemFSMState.toString());
+  p_gemApp->getAppISToolBox()->setString("State",   m_gemFSMState.toString());
   INFO("GEMFSM::stateChanged:Current state is: [" << m_gemFSMState.toString() << "]");
   /* TCDS way
   // Send notification to Run Control

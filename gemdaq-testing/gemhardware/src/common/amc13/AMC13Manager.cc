@@ -20,6 +20,7 @@ void gem::hw::amc13::AMC13Manager::AMC13Info::registerFields(xdata::Bag<AMC13Inf
 {
 
   bag->addField("ConnectionFile", &connectionFile);
+  bag->addField("CardName",       &cardName);
 
   bag->addField("AMCInputEnableList", &amcInputEnableList);
   bag->addField("AMCIgnoreTTSList",   &amcIgnoreTTSList  );
@@ -29,6 +30,10 @@ void gem::hw::amc13::AMC13Manager::AMC13Info::registerFields(xdata::Bag<AMC13Inf
   bag->addField("MonitorBackPressure", &monBackPressure);
   bag->addField("EnableLocalTTC",      &enableLocalTTC );
   bag->addField("EnableLocalL1A",      &enableLocalL1A );
+  bag->addField("InternalPeriodicPeriod", &internalPeriodicPeriod );
+  bag->addField("L1Amode", &l1Amode );
+  bag->addField("L1Arules", &l1Arules );
+  bag->addField("L1Aburst", &l1Aburst );
 
   bag->addField("PrescaleFactor", &prescaleFactor);
   bag->addField("BCOffset",       &bcOffset      );
@@ -55,14 +60,14 @@ gem::hw::amc13::AMC13Manager::AMC13Manager(xdaq::ApplicationStub* stub) :
   uhal::setLogLevelTo(uhal::Error);
 
   //initialize the AMC13Manager application objects
-  DEBUG("connecting to the AMC13ManagerWeb interface");
+  DEBUG("AMC13Manager::connecting to the AMC13ManagerWeb interface");
   p_gemWebInterface = new gem::hw::amc13::AMC13ManagerWeb(this);
   //p_gemMonitor      = new gem::hw::amc13::AMC13HwMonitor(this);
-  DEBUG("done");
+  DEBUG("AMC13Manager::done");
 
-  //DEBUG("executing preInit for AMC13Manager");
+  //DEBUG("AMC13Manager::executing preInit for AMC13Manager");
   //preInit();
-  //DEBUG("done");
+  //DEBUG("AMC13Manager::done");
   p_appDescriptor->setAttribute("icon","/gemdaq/gemhardware/html/images/amc13/AMC13Manager.png");
 }
 
@@ -82,6 +87,7 @@ void gem::hw::amc13::AMC13Manager::actionPerformed(xdata::Event& event)
   }
   // update configuration variables
   m_connectionFile     = m_amc13Params.bag.connectionFile.value_;
+  m_cardName           = m_amc13Params.bag.cardName.value_;
   m_amcInputEnableList = m_amc13Params.bag.amcInputEnableList.value_;
   m_amcIgnoreTTSList   = m_amc13Params.bag.amcIgnoreTTSList.value_;
   m_enableDAQLink      = m_amc13Params.bag.enableDAQLink.value_;
@@ -89,6 +95,10 @@ void gem::hw::amc13::AMC13Manager::actionPerformed(xdata::Event& event)
   m_monBackPressEnable = m_amc13Params.bag.monBackPressure.value_;
   m_enableLocalTTC     = m_amc13Params.bag.enableLocalTTC.value_;
   m_enableLocalL1A     = m_amc13Params.bag.enableLocalL1A.value_;
+  m_internalPeriodicPeriod = m_amc13Params.bag.internalPeriodicPeriod.value_;
+  m_L1Amode            = m_amc13Params.bag.l1Amode.value_;
+  m_L1Arules           = m_amc13Params.bag.l1Arules.value_;
+  m_L1Aburst           = m_amc13Params.bag.l1Aburst.value_;
   m_prescaleFactor     = m_amc13Params.bag.prescaleFactor.value_;
   m_bcOffset           = m_amc13Params.bag.bcOffset.value_;
   m_fedID              = m_amc13Params.bag.fedID.value_;
@@ -113,25 +123,24 @@ void gem::hw::amc13::AMC13Manager::initializeAction()
   throw (gem::hw::amc13::exception::Exception)
 {
   //hcal has a pre-init, what is the reason to not do everything in initialize?
-  //std::string addressBase = "${AMC13_ADDRESS_TABLE_PATH}/";
-  //std::string connection  = "${BUILD_HOME}/gemdaq-testing/gemhardware/xml/amc13/"+m_connectionFile;
-  std::string connection  = "${GEM_ADDRESS_TABLE_PATH}/"+m_connectionFile;
-  std::string cardname    = "gem.shelf01.amc13";
+  std::string connection = "${GEM_ADDRESS_TABLE_PATH}/"+m_connectionFile;
+  std::string cardname   = m_cardName;
   try {
     gem::utils::LockGuard<gem::utils::Lock> guardedLock(m_amc13Lock);
+    DEBUG("Trying to create connection to " << m_cardName << " in " << connection);
     p_amc13 = new ::amc13::AMC13(connection, cardname+".T1", cardname+".T2");
   } catch (uhal::exception::exception & e) {
-    ERROR("AMC13::AMC13() failed, caught uhal::exception:" <<  e.what() );
+    ERROR("AMC13Manager::AMC13::AMC13() failed, caught uhal::exception:" <<  e.what() );
     XCEPT_RAISE(gem::hw::amc13::exception::HardwareProblem,std::string("Unable to create class: ")+e.what());
   } catch (std::exception& e) {
-    ERROR("AMC13::AMC13() failed, caught std::exception:" << e.what() );
+    ERROR("AMC13Manager::AMC13::AMC13() failed, caught std::exception:" << e.what() );
     XCEPT_RAISE(gem::hw::amc13::exception::HardwareProblem,std::string("Unable to create class: ")+e.what());
   } catch (...) {
-    ERROR("AMC13::AMC13() failed, caught ...");
+    ERROR("AMC13Manager::AMC13::AMC13() failed, caught ...");
     XCEPT_RAISE(gem::hw::amc13::exception::HardwareProblem,std::string("Unable to create AMC13 connection"));
   }
 
-  DEBUG("finished with AMC13::AMC13()");
+  DEBUG("AMC13Manager::finished with AMC13::AMC13()");
 
   try {
     gem::utils::LockGuard<gem::utils::Lock> guardedLock(m_amc13Lock);
@@ -139,8 +148,10 @@ void gem::hw::amc13::AMC13Manager::initializeAction()
     
     p_amc13->enableAllTTC();
   } catch (uhal::exception::exception & e) {
+    ERROR("AMC13Manager::AMC13::AMC13() failed, caught uhal::exception " << e.what());
     XCEPT_RAISE(gem::hw::amc13::exception::HardwareProblem,std::string("Problem during preinit : ")+e.what());
   } catch (std::exception& e) {
+    ERROR("AMC13Manager::AMC13::AMC13() failed, caught std::exception " << e.what());
     XCEPT_RAISE(gem::hw::amc13::exception::HardwareProblem,std::string("Problem during preinit : ")+e.what());
   }
 
@@ -151,13 +162,14 @@ void gem::hw::amc13::AMC13Manager::initializeAction()
   //possibilities are TTC/TCDS mode, DAQ link, local trigger scheme
   //lock the access
   gem::utils::LockGuard<gem::utils::Lock> guardedLock(m_amc13Lock);
-  
+
   //enable daq link (if SFP mask is non-zero
   if (m_enableDAQLink) {
+    DEBUG("Enabling DAQLink with settings: fake data:" << m_enableFakeData
+          << ", sfpMask:" << m_sfpMask);
     p_amc13->fakeDataEnable(m_enableFakeData);
     p_amc13->daqLinkEnable(m_enableDAQLink);
     p_amc13->sfpOutputEnable(m_sfpMask);
-    
   }
   //enable SFP outputs based on mask configuration
   
@@ -166,7 +178,27 @@ void gem::hw::amc13::AMC13Manager::initializeAction()
   //enable specified AMCs
   m_slotMask = p_amc13->parseInputEnableList(m_amcInputEnableList,true);
   p_amc13->AMCInputEnable(m_slotMask);
-  usleep(500);
+
+  // Use local TTC signal if config doc says so
+  p_amc13->localTtcSignalEnable(m_enableLocalTTC);
+
+  // Enable Monitor Buffer Backpressure if config doc says so
+  p_amc13->monBufBackPressEnable(m_monBackPressEnable);
+
+  // m_dtc->configurePrescale(1,m_preScaleFactNumOfZeros);
+  p_amc13->configurePrescale(0, m_prescaleFactor);
+
+  // set the FED id
+  p_amc13->setFEDid(m_fedID);
+
+  // reset the T1
+  p_amc13->reset(::amc13::AMC13::T1);
+
+  // reset the T1 counters
+  p_amc13->resetCounters();
+
+  // Setting L1A if config doc says so
+  if (m_enableLocalL1A) p_amc13->configureLocalL1A(m_enableLocalL1A,m_L1Amode,m_L1Aburst,m_internalPeriodicPeriod,m_L1Arules);
 
   //unlock the access
 }
@@ -175,16 +207,19 @@ void gem::hw::amc13::AMC13Manager::configureAction()
   throw (gem::hw::amc13::exception::Exception)
 {
   //set the settings from the config options
-  usleep(500);
+  usleep(500); // just for testing the timing of different applications
 }
 
 void gem::hw::amc13::AMC13Manager::startAction()
   throw (gem::hw::amc13::exception::Exception)
 {
-  DEBUG("Entering gem::hw::amc13::AMC13Manager::startAction()");
+  DEBUG("AMC13Manager::Entering gem::hw::amc13::AMC13Manager::startAction()");
   //gem::base::GEMFSMApplication::enable();
   gem::utils::LockGuard<gem::utils::Lock> guardedLock(m_amc13Lock);
+  p_amc13->reset(::amc13::AMC13::T1);
   usleep(500);
+  p_amc13->reset(::amc13::AMC13::T1);
+  if (m_enableLocalL1A) p_amc13->startContinuousL1A();
   p_amc13->startRun();
 }
 
@@ -194,22 +229,23 @@ void gem::hw::amc13::AMC13Manager::pauseAction()
   //what does pause mean here?
   //if local triggers are enabled, do we have a separate trigger application?
   //we can just disable them here maybe?
-  usleep(500);
+  usleep(500); // just for testing the timing of different applications
 }
 
 void gem::hw::amc13::AMC13Manager::resumeAction()
   throw (gem::hw::amc13::exception::Exception)
 {
   //undo the actions taken in pauseAction
-  usleep(500);
+  usleep(500); // just for testing the timing of different applications
 }
 
 void gem::hw::amc13::AMC13Manager::stopAction()
   throw (gem::hw::amc13::exception::Exception)
 {
-  DEBUG("Entering gem::hw::amc13::AMC13Manager::stopAction()");
+  DEBUG("AMC13Manager::Entering gem::hw::amc13::AMC13Manager::stopAction()");
   //gem::base::GEMFSMApplication::disable();
   gem::utils::LockGuard<gem::utils::Lock> guardedLock(m_amc13Lock);
+  if (m_enableLocalL1A) p_amc13->stopContinuousL1A();
   usleep(500);
   p_amc13->endRun();
 }
@@ -218,13 +254,16 @@ void gem::hw::amc13::AMC13Manager::haltAction()
   throw (gem::hw::amc13::exception::Exception)
 {
   //what is necessary for a halt on the AMC13?
-  usleep(500);
+  usleep(500); // just for testing the timing of different applications
 }
 
 void gem::hw::amc13::AMC13Manager::resetAction()
   throw (gem::hw::amc13::exception::Exception)
 {
   //what is necessary for a reset on the AMC13?
+  DEBUG("Entering gem::hw::amc13::AMC13Manager::resetAction()");
+  if (p_amc13!=0) delete p_amc13;
+  p_amc13 = 0;
   usleep(500);
   //gem::base::GEMFSMApplication::resetAction();
 }

@@ -54,6 +54,8 @@ namespace gem {
       void xgiStop(      xgi::Input *in, xgi::Output *out );
       void xgiHalt(      xgi::Input *in, xgi::Output *out );
       void xgiReset(     xgi::Input *in, xgi::Output *out );
+      
+      void jsonStateUpdate(xgi::Input *in, xgi::Output *out );
 
       // directs commands to the proper workloop
       void workloopDriver(std::string const& command)
@@ -172,6 +174,11 @@ namespace gem {
       toolbox::task::WorkLoop *p_wl;
 
     protected:
+      /* updateState
+       * 
+       */
+      void updateState() {m_state = m_gemfsm.getCurrentState();};
+
       std::shared_ptr<utils::GEMInfoSpaceToolBox> p_appStateInfoSpaceToolBox;
 
       xdata::InfoSpace* p_appStateInfoSpace;
